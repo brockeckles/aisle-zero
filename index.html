@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aisle Zero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<!--SUPABASE_SCRIPT--><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><!--/SUPABASE_SCRIPT-->
+<style>
+:root{
+  --navy:#13274C; --navy-2:#1D3866; --navy-3:#2B4C82;
+  --orange:#CA4E27; --orange-soft:#F4E2D9;
+  --paper:#F6F4F0; --card:#FFFFFF; --line:#E3DFD8; --line-2:#EFECE6;
+  --ink:#13274C; --muted:#5D6677; --faint:#8A92A0;
+  --ok:#2E7D5B; --warn:#B7791F;
+  --r:10px; --shadow:0 1px 2px rgba(19,39,76,.06),0 4px 14px rgba(19,39,76,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"Hanken Grotesk",system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--navy-3);text-decoration-thickness:1px;text-underline-offset:2px}
+a:hover{color:var(--orange)}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+/* Header */
+header.top{background:var(--navy);color:#fff;position:sticky;top:0;z-index:20}
+header.top .wrap{display:flex;align-items:center;gap:28px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:700;letter-spacing:.2px;font-size:18px}
+.brand:hover{color:#fff}
+.brand .mark{width:30px;height:30px;border-radius:6px;background:#fff;color:var(--navy);display:grid;place-items:center;font-weight:800;font-size:15px;position:relative;overflow:hidden}
+.brand .mark::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:var(--orange)}
+.brand .mark span{margin-top:4px}
+nav.main{display:flex;gap:4px;flex:1;overflow-x:auto}
+nav.main a{color:#C9D2E3;text-decoration:none;padding:6px 10px;border-radius:6px;font-size:14px;font-weight:500;white-space:nowrap}
+nav.main a:hover{color:#fff;background:rgba(255,255,255,.08)}
+nav.main a.on{color:#fff;background:rgba(255,255,255,.12)}
+.auth{font-size:13px;color:#C9D2E3;white-space:nowrap}
+.auth button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:5px 10px;font-size:13px}
+.auth button:hover{border-color:var(--orange);color:#fff}
+.preview-bar{background:var(--orange);color:#fff;font-size:13px;text-align:center;padding:6px 12px}
+
+main{padding:36px 0 80px;min-height:70vh}
+h1,h2,h3{line-height:1.2;letter-spacing:-.01em;margin:0 0 .5em}
+h1{font-size:40px;font-weight:700}
+h2{font-size:26px;font-weight:700}
+h3{font-size:18px;font-weight:700}
+.kicker{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--orange);margin-bottom:8px}
+.lede{font-size:19px;color:var(--muted);max-width:720px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* Hero */
+.hero{display:grid;grid-template-columns:1.3fr 1fr;gap:32px;align-items:stretch;margin-bottom:40px}
+.hero h1{font-size:48px}
+.hero h1 em{font-style:normal;color:var(--orange)}
+.today{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px}
+.stat-row{display:flex;gap:18px}
+.stat{flex:1;border-left:3px solid var(--orange);padding-left:12px}
+.stat b{display:block;font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:600;font-size:15px;text-decoration:none}
+.btn:hover{background:var(--navy-2);color:#fff}
+.btn.alt{background:#fff;color:var(--navy);border:1px solid var(--line)}
+.btn.alt:hover{border-color:var(--navy);color:var(--navy)}
+.btn.orange{background:var(--orange)}
+.btn.orange:hover{background:#B4431F}
+
+/* Aisle signs */
+.aisles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.aisle{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;text-decoration:none;color:var(--ink);box-shadow:var(--shadow);display:flex;flex-direction:column;transition:transform .12s ease,box-shadow .12s ease}
+.aisle:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(19,39,76,.1);color:var(--ink)}
+.sign{background:var(--navy);color:#fff;padding:14px 16px 12px;position:relative}
+.sign::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:var(--orange)}
+.sign .no{font-size:11px;letter-spacing:.18em;font-weight:700;color:#AFC0DD}
+.sign .num{font-size:40px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.sign .t{font-size:17px;font-weight:700;margin-top:6px}
+.aisle .body{padding:14px 16px 16px;font-size:14px;color:var(--muted);flex:1}
+.aisle ul{margin:10px 0 0;padding:0;list-style:none;font-size:13px;color:var(--ink)}
+.aisle li{padding:3px 0;border-top:1px dashed var(--line-2)}
+.aisle li:first-child{border-top:0}
+.aisle.locked .sign{background:#5C6A84}
+.lock{font-size:12px;color:var(--warn);font-weight:600}
+
+/* Module page */
+.mod{display:grid;grid-template-columns:270px 1fr;gap:36px}
+.side{position:sticky;top:84px;align-self:start}
+.side .sign{border-radius:var(--r) var(--r) 0 0}
+.side nav{background:var(--card);border:1px solid var(--line);border-top:0;border-radius:0 0 var(--r) var(--r);padding:8px}
+.side nav a{display:block;padding:8px 10px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:14px}
+.side nav a:hover{background:var(--line-2)}
+.side nav a.on{background:var(--orange-soft);color:var(--navy);font-weight:600}
+article.lesson{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:32px 36px;box-shadow:var(--shadow);min-width:0}
+article.lesson h1{font-size:32px}
+.md{font-size:16px}
+.md h2{font-size:21px;margin-top:1.6em}
+.md h3{margin-top:1.4em}
+.md p{margin:.7em 0}
+.md ul,.md ol{padding-left:1.3em}
+.md li{margin:.25em 0}
+.md table{border-collapse:collapse;width:100%;margin:1em 0;font-size:14px;display:block;overflow-x:auto}
+.md th{background:var(--navy);color:#fff;text-align:left;font-weight:600;padding:8px 10px;white-space:nowrap}
+.md td{padding:8px 10px;border-bottom:1px solid var(--line-2);vertical-align:top}
+.md tr:nth-child(even) td{background:#FAF9F6}
+.md blockquote{margin:1em 0;padding:10px 14px;border-left:3px solid var(--warn);background:#FFF8EC;color:#5B4520;border-radius:0 6px 6px 0}
+.md blockquote p{margin:.2em 0}
+.md code{background:var(--line-2);padding:1px 5px;border-radius:4px;font-size:.92em}
+.callout{margin-top:24px;border-radius:8px;padding:14px 16px;font-size:15px}
+.callout .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:4px}
+.callout.radian{background:#EEF2F9;border:1px solid #D5DEEE}
+.callout.radian .lbl{color:var(--navy-3)}
+.callout.const{background:var(--orange-soft);border:1px solid #EBC7B6}
+.callout.const .lbl{color:var(--orange)}
+.callout p{margin:.3em 0}
+.meta{margin-top:20px;font-size:12px;color:var(--faint)}
+.pager{display:flex;justify-content:space-between;margin-top:22px;gap:12px}
+
+/* Lexicon */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 22px}
+.toolbar input{flex:1;min-width:220px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:13px;color:var(--ink)}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.terms{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.term{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.term h3{margin:0 0 4px;font-size:17px}
+.term .dom{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orange)}
+.term p{margin:.4em 0;font-size:14.5px}
+.term .f{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--line-2);padding:6px 8px;border-radius:6px;margin:.5em 0}
+.term .x{font-size:13.5px;color:var(--muted)}
+.term .miss{font-size:13px;color:#8A3B1E}
+.term .say{font-size:13.5px;color:var(--navy-3);font-style:italic}
+
+/* Flashcards */
+.fc-wrap{max-width:640px;margin:10px auto}
+.card3d{perspective:1200px;cursor:pointer}
+.card3d .in{position:relative;height:300px;transition:transform .45s;transform-style:preserve-3d}
+.card3d.flip .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;padding:30px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-shadow:var(--shadow)}
+.face.front{background:var(--navy);color:#fff}
+.face.front .q{font-size:30px;font-weight:700}
+.face.front .h{font-size:13px;color:#AFC0DD;margin-top:14px}
+.face.back{background:#fff;border:1px solid var(--line);transform:rotateY(180deg);font-size:17px}
+.face.back .ex{font-size:14px;color:var(--muted);margin-top:10px}
+.grades{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.grades button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px;font-weight:600}
+.grades button small{display:block;font-weight:400;color:var(--faint);font-size:11px}
+.grades button:hover{border-color:var(--navy)}
+.grades .again{color:#A33A1B}.grades .easy{color:var(--ok)}
+.progress{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:12px 0}
+.progress i{display:block;height:100%;background:var(--orange)}
+
+/* Players */
+.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.player{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.player .row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.player h3{margin:0;font-size:17px}
+.badge{font-size:11px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:var(--line-2);color:var(--muted);white-space:nowrap}
+.badge.client{background:var(--orange-soft);color:var(--orange)}
+.player .sub{font-size:13px;color:var(--faint)}
+.player .md{font-size:14px}
+.player .md p{margin:.3em 0}
+.player .rel{border-top:1px dashed var(--line);padding-top:6px}
+.player .rel b{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--navy-3)}
+
+/* Sign in */
+.panel{max-width:440px;margin:30px auto;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:28px;box-shadow:var(--shadow)}
+.panel input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin:10px 0 14px}
+.empty{padding:40px;text-align:center;color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:var(--r)}
+footer{border-top:1px solid var(--line);padding:22px 0;font-size:12px;color:var(--faint)}
+.side .other a{display:block;font-size:13px;color:var(--muted);text-decoration:none;padding:3px 2px}
+.side .other a:hover{color:var(--orange)}
+.side .other b{color:var(--orange);font-variant-numeric:tabular-nums;margin-right:4px}
+.tl{position:relative;margin-top:24px;border-left:3px solid var(--navy);padding-left:0}
+.tl-row{display:grid;grid-template-columns:90px 1fr;gap:18px;padding:12px 0 12px 20px;position:relative}
+.tl-row::before{content:"";position:absolute;left:-8px;top:20px;width:13px;height:13px;border-radius:50%;background:var(--orange);border:3px solid var(--paper)}
+.tl-y{font-size:22px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+.tl-b{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.tl-e{font-weight:600}
+.tl-s{font-size:14px;color:var(--muted);margin-top:4px}
+.sc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;margin:16px 0}
+.sc .row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.sc textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;margin:10px 0}
+table.rd{display:table}
+table.rd td{vertical-align:middle}
+.lvl{width:32px;height:32px;border-radius:6px;border:1px solid var(--line);background:#fff;margin-right:4px;font-weight:700;color:var(--muted)}
+.lvl.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.lvl.tgt{outline:2px solid var(--orange);outline-offset:1px}
+.ev{width:100%;min-width:220px;border:1px solid var(--line);border-radius:6px;padding:7px 9px;font:inherit;font-size:14px}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr}
+  .hero h1{font-size:38px}
+  .mod{grid-template-columns:1fr}
+  .side{position:static}
+  article.lesson{padding:22px 18px}
+  header.top .wrap{gap:14px}
+  .brand .word{display:none}
+}
+</style>
+</head>
+<body>
+<div id="previewBar" class="preview-bar" hidden>Preview snapshot: public content only. Sign-in, saved progress and gated sections work on the live site.</div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#home"><div class="mark"><span>0</span></div><span class="word">Aisle Zero</span></a>
+    <nav class="main" id="nav"></nav>
+    <div class="auth" id="auth"></div>
+  </div>
+</header>
+<main><div class="wrap" id="app"><div class="empty">Loading…</div></div></main>
+<footer><div class="wrap">Aisle Zero · a personal study guide to Radian and grocery merchandising. Facts are sourced and dated; unverified items are not shown.</div></footer>
+
+<script>
+/* ================= Config ================= */
+const SUPABASE_URL = "https://gmdgpwylevdbfhxxbavl.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ELlM8YIiGwVyMdZpDr9tWw_tqm8koAV";
+const SNAPSHOT = window.AZ_SNAPSHOT || null;   // set in preview builds only
+
+/* ================= State ================= */
+const S = { modules:[], lessons:[], terms:[], players:[], timeline:[], scenarios:[], readiness:{}, notes:{}, user:null, member:false, reviews:{}, loaded:false };
+let sb = null;
+if (!SNAPSHOT && window.supabase) sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = (s,el=document)=>el.querySelector(s);
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const md = s => s ? DOMPurify.sanitize(marked.parse(String(s))) : "";
+const mdInline = s => s ? DOMPurify.sanitize(marked.parseInline(String(s))) : "";
+const fmtDate = d => d ? new Date(d+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}) : "";
+function store(k,v){try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k,JSON.stringify(v)); }catch(e){ return null; }}
+
+/* ================= Data ================= */
+async function load(){
+  if (SNAPSHOT){
+    Object.assign(S, {modules:SNAPSHOT.modules, lessons:SNAPSHOT.lessons, terms:SNAPSHOT.terms, players:SNAPSHOT.players, timeline:SNAPSHOT.timeline||[]});
+    S.reviews = store("az_reviews") || {};
+    S.readiness = store("az_readiness") || {};
+    S.loaded = true; return;
+  }
+  const { data:{ session } } = await sb.auth.getSession();
+  S.user = session?.user || null;
+  const [m,l,t,p,tl] = await Promise.all([
+    sb.from("modules").select("*").order("sort"),
+    sb.from("lessons").select("id,module_id,slug,title,sort,body_md,why_radian_md,visibility,verified_at").order("sort"),
+    sb.from("terms").select("*").order("term"),
+    sb.from("players").select("*").order("name"),
+    sb.from("timeline_events").select("*").order("year"),
+  ]);
+  S.modules = m.data||[]; S.lessons = l.data||[]; S.terms = t.data||[]; S.players = p.data||[]; S.timeline = tl.data||[];
+  S.member = S.modules.some(x=>x.visibility==="gated");
+  S.notes = {}; S.scenarios = [];
+  if (S.user){
+    const [n, r, sc, rd] = await Promise.all([
+      sb.from("lesson_notes").select("lesson_id,constellation_md"),
+      sb.from("review_state").select("*"),
+      sb.from("scenarios").select("*").order("difficulty"),
+      sb.from("readiness").select("*"),
+    ]);
+    (n.data||[]).forEach(r=>S.notes[r.lesson_id]=r.constellation_md);
+    S.reviews = {}; (r.data||[]).forEach(x=>S.reviews[x.term_id]=x);
+    S.scenarios = sc.data||[];
+    S.readiness = {}; (rd.data||[]).forEach(x=>S.readiness[x.domain]=x);
+  } else {
+    S.reviews = store("az_reviews") || {};
+    S.readiness = {};
+  }
+  S.loaded = true;
+}
+
+/* ================= Spaced repetition (SM-2) ================= */
+function schedule(prev, grade){ // grade: 0 again, 3 hard, 4 good, 5 easy
+  let ease = prev?.ease ?? 2.5, reps = prev?.reps ?? 0, interval = prev?.interval_days ?? 0;
+  if (grade < 3){ reps = 0; interval = 0; }
+  else {
+    reps += 1;
+    interval = reps===1 ? 1 : reps===2 ? (grade===5?4:3) : Math.round(interval * ease * (grade===3?0.8:grade===5?1.3:1));
+  }
+  ease = Math.max(1.3, ease + (0.1 - (5-grade)*(0.08+(5-grade)*0.02)));
+  const due = new Date(Date.now() + (interval===0 ? 10*60*1000 : interval*86400000));
+  return { ease:+ease.toFixed(2), reps, interval_days:interval, due_at:due.toISOString(), last_grade:grade };
+}
+async function saveReview(term_id, rec){
+  S.reviews[term_id] = { ...rec, term_id };
+  if (sb && S.user && S.member){
+    await sb.from("review_state").upsert({ term_id, ...rec, updated_at:new Date().toISOString() });
+  } else store("az_reviews", S.reviews);
+}
+function dueTerms(){
+  const now = Date.now();
+  return S.terms.filter(t=>{ const r=S.reviews[t.id]; return !r || new Date(r.due_at).getTime() <= now; });
+}
+const newCount = ()=> S.terms.filter(t=>!S.reviews[t.id]).length;
+
+/* ================= Layout ================= */
+const AISLE = { radian:"01", constellation:"02", industry:"03", "pricing-promo":"04", fresh:"05", suppliers:"06", competition:"07", shopper:"08", trends:"09", bridge:"10" };
+const TOOLS = [["11","Lexicon","lexicon"],["12","Key Players","players"],["13","Timeline","timeline"],["14","Practice","practice"],["15","Readiness","readiness"]];
+function renderNav(route){
+  const onMod = route.startsWith("m-");
+  const items = [["home","Home"], ["m-radian","Radian HQ"], ["aisles","Aisles"], ["lexicon","Lexicon"], ["flashcards","Flashcards"], ["players","Players"], ["timeline","Timeline"], ["practice","Practice"], ["readiness","Readiness"]];
+  $("#nav").innerHTML = items.map(([h,t])=>{
+    const on = route===h || route.startsWith(h+"--") || (h==="aisles" && onMod && !route.startsWith("m-radian"));
+    return `<a href="#${h}" class="${on?"on":""}">${esc(t)}</a>`;
+  }).join("");
+  const a = $("#auth");
+  if (SNAPSHOT){ a.innerHTML = ""; return; }
+  a.innerHTML = S.user
+    ? `<span>${esc(S.user.email)}</span> <button id="so">Sign out</button>`
+    : `<button id="si">Sign in</button>`;
+  $("#so")?.addEventListener("click", async()=>{ await sb.auth.signOut(); location.hash="home"; location.reload(); });
+  $("#si")?.addEventListener("click", ()=>{ location.hash="signin"; });
+}
+
+/* ================= Views ================= */
+function aisleGrid(){
+  const lessonsBy = id => S.lessons.filter(l=>l.module_id===id);
+  const locked = { constellation:["Constellation","Radian's data graph: domains, the Promotion node, build plan and commercial paths."], bridge:["Bridge","How your supply-chain and product-building experience maps onto Radian's work."] };
+  const cards = [];
+  Object.keys(AISLE).forEach(slug=>{
+    const m = S.modules.find(x=>x.slug===slug);
+    if (m){
+      const ls = lessonsBy(m.id);
+      cards.push(`<a class="aisle" href="#m-${m.slug}">
+      <div class="sign"><div class="no">AISLE${m.visibility==="gated"?" · PRIVATE":""}</div><div class="num">${AISLE[slug]}</div><div class="t">${esc(m.title)}</div></div>
+      <div class="body">${esc(m.summary_md||"")}<ul>${ls.slice(0,4).map(l=>`<li>${esc(l.title)}</li>`).join("")}${ls.length>4?`<li class="muted">+${ls.length-4} more</li>`:""}</ul></div></a>`);
+    } else if (locked[slug]){
+      cards.push(`<a class="aisle locked" href="${SNAPSHOT?"#home":"#signin"}"><div class="sign"><div class="no">AISLE · PRIVATE</div><div class="num">${AISLE[slug]}</div><div class="t">${locked[slug][0]}</div></div><div class="body"><span class="lock">Sign in to open</span><br>${locked[slug][1]}</div></a>`);
+    }
+  });
+  const desc = { lexicon:`${S.terms.length} terms with formulas, examples, common misuses and practitioner phrasing.`, players:`${S.players.length} retailers, suppliers, distributors, data firms and competitors.`, timeline:`${S.timeline.length} moments that shaped grocery, each with "so what today."`, practice:"Case scenarios with model answers: promotions, beef, competition, the portal.", readiness:"Your competency matrix: aware → conversant → can apply → can challenge." };
+  TOOLS.forEach(([n,t,h])=>{
+    const gated = (h==="practice"||h==="readiness") && !S.user;
+    cards.push(`<a class="aisle ${gated?"locked":""}" href="#${h}"><div class="sign"><div class="no">AISLE${gated?" · PRIVATE":""}</div><div class="num">${n}</div><div class="t">${t}</div></div><div class="body">${gated?`<span class="lock">Sign in to open</span><br>`:""}${desc[h]}</div></a>`);
+  });
+  return `<div class="aisles">${cards.join("")}</div>`;
+}
+function viewAisles(){ return `<div class="kicker">Store directory</div><h1>The aisles</h1><p class="lede">Ten subject aisles and five tool aisles. Private aisles open when you sign in.</p><div style="height:14px"></div>${aisleGrid()}`; }
+function viewHome(){
+  const due = dueTerms().length, nw = newCount();
+
+  const radianLatest = S.lessons.find(l=>l.slug==="platform-2026");
+  return `
+  <section class="hero">
+    <div>
+      <div class="kicker">Before aisle one</div>
+      <h1>Walk in already knowing <em>the store.</em></h1>
+      <p class="lede">A working study guide to Radian, its clients, and the grocery merchandising world: pricing, promotions, trade, fresh, and the players behind them. Every fact is sourced and dated.</p>
+      <p><a class="btn" href="#m-radian">Start with Radian HQ</a> &nbsp; <a class="btn alt" href="#m-pricing-promo">Pricing &amp; Promotions</a></p>
+    </div>
+    <div class="today">
+      <div class="kicker" style="margin:0">Today</div>
+      <div class="stat-row">
+        <div class="stat"><b>${due}</b><span>flashcards due</span></div>
+        <div class="stat"><b>${nw}</b><span>not yet studied</span></div>
+        <div class="stat"><b>${S.terms.length}</b><span>terms in lexicon</span></div>
+      </div>
+      <a class="btn orange" href="#flashcards">Review ${Math.min(due,20)||""} cards</a>
+      ${radianLatest?`<div class="small muted" style="border-top:1px dashed var(--line);padding-top:10px"><b style="color:var(--ink)">Latest at Radian:</b> Fresh Thyme selected Radian's promotion planning portal (Oct 29, 2026). <a href="#m-radian--platform-2026">Read the 2026 platform brief →</a></div>`:""}
+    </div>
+  </section>
+  <div class="kicker">The aisles</div>
+  ${aisleGrid()}`;
+}
+
+function viewModule(slug, lessonSlug){
+  const m = S.modules.find(x=>x.slug===slug);
+  if (!m) return (slug==="constellation"||slug==="bridge") ? viewLocked(slug) : viewMissing();
+  const ls = S.lessons.filter(l=>l.module_id===m.id).sort((a,b)=>a.sort-b.sort);
+  const cur = ls.find(l=>l.slug===lessonSlug) || ls[0];
+  if (!cur) return viewMissing();
+  const i = ls.indexOf(cur), prev = ls[i-1], next = ls[i+1];
+  const note = S.notes[cur.id];
+  return `<div class="mod">
+    <aside class="side">
+      <div class="sign"><div class="no">AISLE ${AISLE[m.slug]||""}</div><div class="t" style="font-size:19px">${esc(m.title)}</div></div>
+      <nav>${ls.map(l=>`<a href="#m-${m.slug}--${l.slug}" class="${l===cur?"on":""}">${esc(l.title)}</a>`).join("")}</nav>
+      <div class="other"><div class="kicker" style="margin:18px 0 6px">Other aisles</div>
+      ${S.modules.filter(x=>x.slug!==m.slug).sort((a,b)=>a.sort-b.sort).map(x=>`<a href="#m-${x.slug}"><b>${AISLE[x.slug]||""}</b> ${esc(x.title)}</a>`).join("")}</div>
+    </aside>
+    <article class="lesson">
+      <div class="kicker">${esc(m.kicker||m.title)}</div>
+      <h1>${esc(cur.title)}</h1>
+      <div class="md">${md(cur.body_md)}</div>
+      ${cur.why_radian_md?`<div class="callout radian"><div class="lbl">Why it matters at Radian</div><div class="md">${md(cur.why_radian_md)}</div></div>`:""}
+      ${note?`<div class="callout const"><div class="lbl">How Constellation sees it</div><div class="md">${md(note)}</div></div>`:""}
+      <div class="meta">Verified ${fmtDate(cur.verified_at)}${cur.visibility==="gated"?" · Private (signed in)":""}</div>
+      <div class="pager">
+        ${prev?`<a class="btn alt" href="#m-${m.slug}--${prev.slug}">← ${esc(prev.title)}</a>`:"<span></span>"}
+        ${next?`<a class="btn" href="#m-${m.slug}--${next.slug}">${esc(next.title)} →</a>`:""}
+      </div>
+    </article>
+  </div>`;
+}
+
+let lexState = { q:"", dom:"All" };
+function termCard(t){
+  return `<div class="term">
+    <div class="dom">${esc(t.domain)}</div>
+    <h3>${esc(t.term)}</h3>
+    <p>${mdInline(t.definition)}</p>
+    ${t.formula?`<div class="f">${esc(t.formula)}</div>`:""}
+    ${t.example?`<p class="x"><b>Example.</b> ${mdInline(t.example)}</p>`:""}
+    ${t.misuse?`<p class="miss"><b>Common misuse.</b> ${mdInline(t.misuse)}</p>`:""}
+    ${t.practitioner_phrasing?`<p class="say">${mdInline(t.practitioner_phrasing)}</p>`:""}
+  </div>`;
+}
+function viewLexicon(){
+  const doms = ["All", ...[...new Set(S.terms.map(t=>t.domain))]];
+  return `<div class="kicker">Aisle 11</div><h1>Lexicon</h1>
+  <p class="lede">The words practitioners use, what they mean, and how people get them wrong.</p>
+  <div class="toolbar"><input id="lq" placeholder="Search terms…" value="${esc(lexState.q)}">
+  ${doms.map(d=>`<button class="chip ${lexState.dom===d?"on":""}" data-d="${esc(d)}">${esc(d)}</button>`).join("")}
+  <a class="btn orange" href="#flashcards" style="margin-left:auto">Flashcards</a></div>
+  <div class="terms" id="terms"></div>`;
+}
+function paintTerms(){
+  const q = lexState.q.toLowerCase();
+  const list = S.terms.filter(t=>(lexState.dom==="All"||t.domain===lexState.dom) && (!q || (t.term+" "+t.definition).toLowerCase().includes(q)));
+  $("#terms").innerHTML = list.length ? list.map(termCard).join("") : `<div class="empty">No terms match.</div>`;
+}
+function bindLexicon(){
+  paintTerms();
+  $("#lq").addEventListener("input", e=>{ lexState.q=e.target.value; paintTerms(); });
+  document.querySelectorAll(".chip[data-d]").forEach(b=>b.addEventListener("click",()=>{ lexState.dom=b.dataset.d; render(); }));
+}
+
+let fc = null;
+function startSession(){
+  const due = dueTerms();
+  const reviewed = due.filter(t=>S.reviews[t.id]).sort((a,b)=>new Date(S.reviews[a.id].due_at)-new Date(S.reviews[b.id].due_at));
+  const fresh = due.filter(t=>!S.reviews[t.id]);
+  const order = { Radian:0, Promotions:1, Pricing:2, Trade:3, Fresh:4, Commodities:5 };
+  fresh.sort((a,b)=>(order[a.domain]??9)-(order[b.domain]??9));
+  const queue = [...reviewed, ...fresh.slice(0, Math.max(0, 20-reviewed.length))].slice(0,20);
+  fc = { queue, i:0, flipped:false, done:0, mode: Math.random() };
+}
+function viewFlash(){
+  if (!fc) startSession();
+  const saving = SNAPSHOT || !S.user ? `<p class="small muted">Progress is saved in this browser only.${SNAPSHOT?"":" <a href='#signin'>Sign in</a> to sync it."}</p>` : "";
+  if (!fc.queue.length || fc.i >= fc.queue.length){
+    return `<div class="fc-wrap"><div class="kicker">Flashcards</div><h1>All caught up.</h1>
+      <p class="lede">${fc.done?`You reviewed ${fc.done} card${fc.done>1?"s":""}. `:""}Nothing else is due right now. Cards you know well come back in days or weeks; misses come back today.</p>
+      <p><a class="btn" href="#lexicon">Browse the lexicon</a> <button class="btn alt" id="more">Study 10 more new cards</button></p>${saving}</div>`;
+  }
+  const t = fc.queue[fc.i];
+  const reverse = !!S.reviews[t.id] && (fc.i % 3 === 2); // every third known card: definition → term
+  const front = reverse ? `<div style="font-size:19px;font-weight:500">${mdInline(t.definition)}</div><div class="h">Name the term</div>` : `<div class="q">${esc(t.term)}</div><div class="h">${esc(t.domain)} · tap to flip</div>`;
+  const back = reverse ? `<div class="q" style="font-size:26px;font-weight:700">${esc(t.term)}</div>` : `<div>${mdInline(t.definition)}</div>${t.formula?`<div class="ex" style="font-family:ui-monospace,monospace">${esc(t.formula)}</div>`:""}${t.example?`<div class="ex">${mdInline(t.example)}</div>`:""}`;
+  const pct = Math.round(fc.i / fc.queue.length * 100);
+  return `<div class="fc-wrap">
+    <div class="kicker">Flashcards · ${fc.i+1} of ${fc.queue.length}</div>
+    <div class="progress"><i style="width:${pct}%"></i></div>
+    <div class="card3d ${fc.flipped?"flip":""}" id="card"><div class="in">
+      <div class="face front">${front}</div>
+      <div class="face back">${back}</div>
+    </div></div>
+    <div class="grades" style="visibility:${fc.flipped?"visible":"hidden"}">
+      <button class="again" data-g="0">Again<small>today</small></button>
+      <button data-g="3">Hard<small>sooner</small></button>
+      <button data-g="4">Good<small>on schedule</small></button>
+      <button class="easy" data-g="5">Easy<small>later</small></button>
+    </div>
+    <p class="small muted" style="text-align:center">Space flips · 1–4 grade</p>${saving}
+  </div>`;
+}
+function bindFlash(){
+  $("#more")?.addEventListener("click", ()=>{
+    const fresh = S.terms.filter(t=>!S.reviews[t.id]).slice(0,10);
+    fc = { queue: fresh, i:0, flipped:false, done:0 }; render();
+  });
+  $("#card")?.addEventListener("click", ()=>{ fc.flipped=!fc.flipped; render(); });
+  document.querySelectorAll(".grades button").forEach(b=>b.addEventListener("click", ()=>grade(+b.dataset.g)));
+}
+async function grade(g){
+  const t = fc.queue[fc.i];
+  const rec = schedule(S.reviews[t.id], g);
+  await saveReview(t.id, rec);
+  if (g===0) fc.queue.push(t);
+  fc.i++; fc.done++; fc.flipped=false; render();
+}
+document.addEventListener("keydown", e=>{
+  if ((location.hash||"#home").slice(1)!=="flashcards" || !fc) return;
+  if (e.code==="Space"){ e.preventDefault(); fc.flipped=!fc.flipped; render(); }
+  if (fc.flipped && ["Digit1","Digit2","Digit3","Digit4"].includes(e.code)) grade([0,3,4,5][+e.code.slice(-1)-1]);
+});
+
+let plState = { type:"All", client:false };
+function viewPlayers(){
+  const types = ["All", ...[...new Set(S.players.map(p=>p.type))]];
+  const list = S.players.filter(p=>(plState.type==="All"||p.type===plState.type) && (!plState.client||p.is_radian_client));
+  return `<div class="kicker">Aisle 12</div><h1>Key Players</h1>
+  <p class="lede">Who's who in the chain, and why each one matters to Radian.</p>
+  <div class="toolbar">${types.map(t=>`<button class="chip ${plState.type===t?"on":""}" data-t="${esc(t)}">${esc(t)}</button>`).join("")}
+  <button class="chip ${plState.client?"on":""}" id="cl" style="margin-left:auto">On Radian's partner wall</button></div>
+  <div class="players">${list.map(p=>`<div class="player">
+    <div class="row"><h3>${esc(p.name)}</h3>${p.is_radian_client?`<span class="badge client">Radian partner</span>`:`<span class="badge">${esc(p.type)}</span>`}</div>
+    <div class="sub">${[p.type, p.parent&&("Parent: "+p.parent), p.hq, p.scale].filter(Boolean).map(esc).join(" · ")}</div>
+    <div class="md">${md(p.summary_md)}</div>
+    ${p.recent_moves_md?`<div class="md small"><b>Recent:</b> ${mdInline(p.recent_moves_md)}</div>`:""}
+    ${p.radian_relevance_md?`<div class="rel md"><b>Radian angle</b>${md(p.radian_relevance_md)}</div>`:""}
+  </div>`).join("")}</div>`;
+}
+function bindPlayers(){
+  document.querySelectorAll(".chip[data-t]").forEach(b=>b.addEventListener("click",()=>{plState.type=b.dataset.t; render();}));
+  $("#cl").addEventListener("click",()=>{plState.client=!plState.client; render();});
+}
+
+function viewSignin(){
+  if (SNAPSHOT) return `<div class="panel"><h2>Sign-in is on the live site</h2><p class="muted">This is a preview snapshot.</p></div>`;
+  if (S.user) return `<div class="panel"><h2>You're signed in</h2><p class="muted">${esc(S.user.email)}</p><a class="btn" href="#home">Go home</a></div>`;
+  return `<div class="panel"><h2>Sign in</h2><p class="muted">Enter your email and we'll send a one-time sign-in link. Only allowlisted emails can open private sections.</p>
+  <form id="sf"><input type="email" id="em" required placeholder="you@example.com" autocomplete="email"><button class="btn" type="submit">Send sign-in link</button></form><p id="sm" class="small muted"></p></div>`;
+}
+function bindSignin(){
+  $("#sf")?.addEventListener("submit", async e=>{
+    e.preventDefault();
+    const email = $("#em").value.trim();
+    $("#sm").textContent = "Sending…";
+    const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.origin + location.pathname, shouldCreateUser:true } });
+    $("#sm").textContent = error ? ("Couldn't send: " + error.message) : "Check your inbox for the sign-in link.";
+  });
+}
+const viewLocked = (slug)=>{
+  const names = { constellation:["02","Constellation"], bridge:["10","Bridge"], practice:["14","Practice"], readiness:["15","Readiness"] };
+  const [n,t] = names[slug] || ["",""];
+  return `<div class="panel"><div class="kicker">Aisle ${n}</div><h2>${t} is private</h2><p class="muted">${SNAPSHOT?"Private aisles open on the live site after sign-in.":"Sign in with your allowlisted email to open this aisle."}</p>${SNAPSHOT?"":`<a class="btn" href="#signin">Sign in</a>`}</div>`;
+};
+
+/* ---- Timeline ---- */
+function viewTimeline(){
+  const list = [...S.timeline].sort((a,b)=>b.year-a.year || 0);
+  return `<div class="kicker">Aisle 13</div><h1>Timeline</h1><p class="lede">The moments that shaped grocery merchandising, newest first, each with what it means today.</p>
+  <div class="tl">${list.map(e=>`<div class="tl-row"><div class="tl-y">${e.year}</div><div class="tl-b"><div class="tl-e">${mdInline(e.event)}</div>${e.so_what_today?`<div class="tl-s"><b>So what today:</b> ${mdInline(e.so_what_today)}</div>`:""}</div></div>`).join("")}</div>`;
+}
+
+/* ---- Practice ---- */
+let openSc = {};
+function viewPractice(){
+  if (!S.user) return viewLocked("practice");
+  if (!S.scenarios.length) return `<div class="empty">No scenarios yet.</div>`;
+  return `<div class="kicker">Aisle 14</div><h1>Practice</h1><p class="lede">Work the case first, out loud or in the box, then compare with the model answer.</p>
+  ${S.scenarios.map(s=>{
+    const draft = store("az_sc_"+s.id) || "";
+    return `<div class="sc">
+      <div class="row"><h3>${esc(s.title)}</h3><span class="badge">${esc(s.domain||"")} · ${"●".repeat(s.difficulty||1)}${"○".repeat(3-(s.difficulty||1))}</span></div>
+      <div class="md">${md(s.prompt_md)}</div>
+      ${s.context_md?`<div class="md small muted">${md(s.context_md)}</div>`:""}
+      <textarea data-sc="${s.id}" placeholder="Your answer…">${esc(draft)}</textarea>
+      <button class="btn alt" data-reveal="${s.id}">${openSc[s.id]?"Hide":"Show"} model answer</button>
+      ${openSc[s.id]?`<div class="callout radian"><div class="lbl">Model answer</div><div class="md">${md(s.model_answer_md)}</div></div>`:""}
+    </div>`;}).join("")}`;
+}
+function bindPractice(){
+  document.querySelectorAll("textarea[data-sc]").forEach(t=>t.addEventListener("input",()=>store("az_sc_"+t.dataset.sc,t.value)));
+  document.querySelectorAll("[data-reveal]").forEach(b=>b.addEventListener("click",()=>{ openSc[b.dataset.reveal]=!openSc[b.dataset.reveal]; render(); }));
+}
+
+/* ---- Readiness ---- */
+const RD = [["radian","Radian HQ",2],["constellation","Constellation",3],["industry","Industry map",2],["pricing-promo","Pricing & Promotions",3],["fresh","Fresh, meat & commodities",3],["suppliers","Suppliers & Assortment",2],["competition","Competition & Locations",2],["shopper","Shopper Dynamics",2],["trends","Trends & Policy",2],["foodservice","Foodservice",1]];
+const LEVELS = ["","Aware","Conversant","Can apply","Can challenge"];
+const TERM_DOM = { Pricing:"pricing-promo", Promotions:"pricing-promo", Trade:"pricing-promo", Assortment:"suppliers", Suppliers:"suppliers", Competition:"competition", Shopper:"shopper", Fresh:"fresh", Commodities:"fresh", Radian:"radian" };
+function retention(dom){
+  const ts = S.terms.filter(t=>TERM_DOM[t.domain]===dom);
+  const seen = ts.filter(t=>S.reviews[t.id]);
+  if (!ts.length) return null;
+  const good = seen.filter(t=>(S.reviews[t.id].last_grade??0)>=4).length;
+  return { total:ts.length, seen:seen.length, good };
+}
+function viewReadiness(){
+  if (!S.user) return viewLocked("readiness");
+  const rows = RD.map(([d,name,target])=>{
+    const r = S.readiness[d]; const lv = r?.level||0; const ret = retention(d);
+    return `<tr>
+      <td><b>${esc(name)}</b></td>
+      <td>${[1,2,3,4].map(i=>`<button class="lvl ${lv>=i?"on":""} ${i===target?"tgt":""}" data-d="${d}" data-l="${i}" title="${LEVELS[i]}">${i}</button>`).join("")}<div class="small muted">${lv?LEVELS[lv]:"Not rated"} · target ${LEVELS[target]}</div></td>
+      <td class="small">${ret?`${ret.good}/${ret.total} cards solid${ret.seen<ret.total?` · ${ret.total-ret.seen} unseen`:""}`:"—"}</td>
+      <td><input class="ev" data-d="${d}" value="${esc(r?.evidence_md||"")}" placeholder="Evidence: what can you now do?"></td>
+    </tr>`;}).join("");
+  const met = RD.filter(([d,,t])=>(S.readiness[d]?.level||0)>=t).length;
+  return `<div class="kicker">Aisle 15</div><h1>Readiness</h1>
+  <p class="lede">Rate yourself honestly. <b>Aware</b>: know the words. <b>Conversant</b>: explain it in 60 seconds. <b>Can apply</b>: work a scenario. <b>Can challenge</b>: spot a flawed claim. Outlined numbers are targets.</p>
+  <div class="stat-row" style="max-width:520px;margin:18px 0"><div class="stat"><b>${met}/${RD.length}</b><span>domains at target</span></div><div class="stat"><b>${Object.values(S.reviews).filter(r=>(r.last_grade??0)>=4).length}</b><span>flashcards solid</span></div></div>
+  <div class="md"><table class="rd"><thead><tr><th>Domain</th><th>Level</th><th>Flashcard signal</th><th>Evidence</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+async function saveReadiness(domain, patch){
+  const cur = S.readiness[domain] || { domain, level:1, evidence_md:"" };
+  const rec = { ...cur, ...patch, domain, updated_at:new Date().toISOString() };
+  S.readiness[domain] = rec;
+  await sb.from("readiness").upsert({ domain, level:rec.level, evidence_md:rec.evidence_md, updated_at:rec.updated_at });
+}
+function bindReadiness(){
+  document.querySelectorAll(".lvl").forEach(b=>b.addEventListener("click",async()=>{ await saveReadiness(b.dataset.d,{level:+b.dataset.l}); render(); }));
+  document.querySelectorAll(".ev").forEach(i=>i.addEventListener("change",()=>saveReadiness(i.dataset.d,{evidence_md:i.value, level:S.readiness[i.dataset.d]?.level||1})));
+}
+const viewMissing = ()=>`<div class="empty">That page isn't here. <a href="#home">Go home</a></div>`;
+
+/* ================= Router ================= */
+function render(){
+  if (!S.loaded) return;
+  const route = (location.hash||"#home").slice(1) || "home";
+  renderNav(route);
+  const app = $("#app");
+  if (route==="home") app.innerHTML = viewHome();
+  else if (route.startsWith("m-")){ const [s,l] = route.slice(2).split("--"); app.innerHTML = viewModule(s,l); }
+  else if (route==="lexicon"){ app.innerHTML = viewLexicon(); bindLexicon(); }
+  else if (route==="flashcards"){ app.innerHTML = viewFlash(); bindFlash(); }
+  else if (route==="players"){ app.innerHTML = viewPlayers(); bindPlayers(); }
+  else if (route==="signin"){ app.innerHTML = viewSignin(); bindSignin(); }
+  else if (route==="aisles") app.innerHTML = viewAisles();
+  else if (route==="timeline") app.innerHTML = viewTimeline();
+  else if (route==="practice"){ app.innerHTML = viewPractice(); bindPractice(); }
+  else if (route==="readiness"){ app.innerHTML = viewReadiness(); bindReadiness(); }
+  else app.innerHTML = viewMissing();
+}
+let lastRoute = "";
+window.addEventListener("hashchange", ()=>{
+  const r = location.hash.slice(1);
+  if (r!=="flashcards") fc = null;
+  if (r!==lastRoute){ lastRoute=r; window.scrollTo(0,0); }
+  render();
+});
+
+(async function init(){
+  if (SNAPSHOT) $("#previewBar").hidden = false;
+  try { await load(); }
+  catch(e){ $("#app").innerHTML = `<div class="empty">Couldn't load content. ${esc(e.message||e)}</div>`; return; }
+  if (sb) sb.auth.onAuthStateChange(async (ev)=>{ if (ev==="SIGNED_IN" || ev==="SIGNED_OUT"){ S.loaded=false; await load(); if(location.hash.includes("access_token")) location.hash="home"; render(); } });
+  lastRoute = location.hash.slice(1);
+  render();
+})();
+</script>
+</body>
+</html>
